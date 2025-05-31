@@ -1,0 +1,2 @@
+/Users/cecilia/Desktop/mnli_train.jsonl filter=lfs diff=lfs merge=lfs -text
+data/mnli_train.jsonl filter=lfs diff=lfs merge=lfs -text
