@@ -8,7 +8,7 @@ os.chdir(BASE_DIR)
 # In[1]:
 
 
-from datasets import load_dataset, Features, Sequence, Value, ClassLabel
+from datasets import load_dataset
 
 
 # ## Data Statistics (LMI)
@@ -16,16 +16,9 @@ from datasets import load_dataset, Features, Sequence, Value, ClassLabel
 # In[2]:
 
 #mnli = load_dataset("json", data_files=os.path.join(BASE_DIR, "data", "mnli_train.jsonl"), split="train", lines=True)
-mnli = load_dataset("json", data_files="data/mnli_train.jsonl", split="train")
-
-# In[3]:
-
-
-mnli.features
-
+mnli = load_dataset("json", data_files=os.path.join(BASE_DIR, "data", "mnli_train.jsonl"))
 
 # In[28]:
-
 
 from collections import Counter
 import math
