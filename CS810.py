@@ -15,14 +15,8 @@ from datasets import load_dataset, Features, Sequence, Value, ClassLabel
 
 # In[2]:
 
-
-#mnli = load_dataset("json", data_files=os.path.join(BASE_DIR, "data", "mnli_train.jsonl"), split="train")
-mnli = load_dataset(
-    "json",
-    data_files="data/mnli_train.jsonl",
-    split="train",
-    json_lines=True
-)
+mnli = load_dataset("json", data_files=os.path.join(BASE_DIR, "data", "mnli_train.jsonl"), split="train", json_lines=True)
+#mnli = load_dataset("json", data_files="data/mnli_train.jsonl", split="train", json_lines=True)
 
 # In[3]:
 
