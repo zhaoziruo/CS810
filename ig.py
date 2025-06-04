@@ -47,7 +47,7 @@ attributions, delta = ig.attribute(
     baselines=baseline_ids,
     target=target_label,
     return_convergence_delta=True,
-    n_step=20)
+    n_steps=20)
 
 word_attributions = attributions[0].squeeze(0)
 
