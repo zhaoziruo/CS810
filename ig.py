@@ -39,20 +39,15 @@ baseline_ids  = torch.zeros_like(input_ids).long()
 ig = captum.attr.IntegratedGradients(forward_func)
 
 # attribution
-attributions, delta = ig.attribute(
+attributions = ig.attribute(
     inputs=input_ids, 
     additional_forward_args=attention_mask,
     baselines=baseline_ids,
     return_convergence_delta=True,
     target=target_label)
 
-word_attributions = attributions[0].squeeze(0)
-
 # token-level IG value
 tokens = tokenizer.convert_ids_to_tokens(input_ids[0])
-attr_scores = word_attributions.detach().cpu().numpy().tolist()
-
-print("Token-level attributions for label", target_label_idx, "probability:")
-for token, score in zip(tokens, attr_scores):
-    if token not in ("[PAD]", tokenizer.pad_token):
-        print(f"{token:>10} : {score:.4f}")
+scores = attributions[0].sum(dim=1)
+for tok, score in zip(tokens, scores):
+    print(f"{tok:>12} : {score.item(): .4f}")
