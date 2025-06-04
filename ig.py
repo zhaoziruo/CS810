@@ -44,7 +44,8 @@ attributions, delta = ig.attribute(
     inputs=(input_ids, attention_mask),
     baselines=(baseline_ids, baseline_mask),
     return_convergence_delta=True,
-    n_steps=50)
+    n_steps=50,
+    target=None)
 
 word_attributions = attributions[0].squeeze(0)
 
