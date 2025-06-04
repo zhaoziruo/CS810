@@ -10,11 +10,17 @@ model_name = "M-FAC/bert-tiny-finetuned-mnli"
 
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForSequenceClassification.from_pretrained(model_name)
-model.eval()
 
 
 # 0:entailment, 1:neutral, 2:contradiction
 target_label = int(1)
+
+# forward
+def forward_func(input_ids, attention_mask):
+    input_ids = input_ids.long()
+    logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
+    probs = torch.nn.functional.softmax(logits, dim=1)
+    return probs[:, target_label_idx]
 
 #take an example
 premise = "Your gift is appreciated by each and every student who will benefit from your generosity."
@@ -25,30 +31,29 @@ encoded = tokenizer(premise,hypothesis,
                     max_length=128,
                     padding="max_length")
 input_ids = encoded["input_ids"]
-input_ids = input_ids.long()
 attention_mask = encoded["attention_mask"]
-attention_mask = attention_mask.long()
 
-# forward
-def forward_func(input_ids, attention_mask):
-    logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
-    return torch.nn.functional.softmax(logits, dim=1)
+baseline_ids  = torch.zeros_like(input_ids).long()
+baseline_mask = torch.zeros_like(attention_mask).long()
 
 # IntegratedGradients
 ig = captum.attr.IntegratedGradients(forward_func)
 
 # attribution
 attributions, delta = ig.attribute(
-    inputs=input_ids,
-    additional_forward_args=attention_mask,
+    inputs=(input_ids, attention_mask),
+    baselines=(baseline_ids, baseline_mask),
     target=target_label,
-    return_convergence_delta=True)
+    return_convergence_delta=True,
+    n_steps=50)
+
+word_attributions = attributions[0].squeeze(0)
 
 # token-level IG value
 tokens = tokenizer.convert_ids_to_tokens(input_ids[0])
-scores = attributions[0].sum(dim=1)
-for tok, score in zip(tokens, scores):
-    print(f"{tok:>12} : {score.item(): .4f}")
+attr_scores = word_attributions.detach().cpu().numpy().tolist()
 
-print(f"\nConvergence delta: {delta.item():.4e}")
-
+print("Token-level attributions for label", target_label_idx, "probability:")
+for token, score in zip(tokens, attr_scores):
+    if token not in ("[PAD]", tokenizer.pad_token):
+        print(f"{token:>10} : {score:.4f}")
