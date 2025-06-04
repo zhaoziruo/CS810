@@ -42,7 +42,6 @@ attributions, delta = ig.attribute(
     inputs=input_ids, 
     additional_forward_args=attention_mask,
     baselines=baseline_ids,
-    target=target_label,
     return_convergence_delta=True,
     n_steps=20)
 
