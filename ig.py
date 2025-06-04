@@ -41,10 +41,10 @@ ig = captum.attr.IntegratedGradients(forward_func)
 
 # attribution
 attributions, delta = ig.attribute(
-    inputs=(input_ids, attention_mask),
+    inputs=input_ids, 
+    additional_forward_args=attention_mask,
     baselines=(baseline_ids, baseline_mask),
-    return_convergence_delta=True,
-    allow_unused=True)
+    return_convergence_delta=True)
 
 word_attributions = attributions[0].squeeze(0)
 
