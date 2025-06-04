@@ -26,6 +26,7 @@ encoded = tokenizer(premise,hypothesis,
                     max_length=128,
                     padding="max_length")
 input_ids      = encoded["input_ids"]
+input_ids = input_ids.long()
 attention_mask = encoded["attention_mask"]
 
 # forward
