@@ -18,7 +18,9 @@ target_label = int(1)
 # forward
 def forward_func(input_ids, attention_mask):
     input_ids = input_ids.long()
-    logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
+    outputs = model(input_ids=input_ids, attention_mask=attention_mask,return_dict=True)
+    pooled = outputs.pooler_output
+    logits = model.classifier(pooled)
     probs = torch.nn.functional.softmax(logits, dim=1)
     return probs[:, target_label] 
 
