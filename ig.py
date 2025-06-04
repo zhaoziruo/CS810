@@ -41,9 +41,9 @@ ig = captum.attr.IntegratedGradients(forward_func)
 # attribution
 attributions = ig.attribute(
     inputs=input_ids, 
-    additional_forward_args=attention_mask,
+    additional_forward_args=(attention_mask,),
     baselines=baseline_ids,
-    return_convergence_delta=True,
+    return_convergence_delta=False,
     target=target_label)
 
 # token-level IG value
