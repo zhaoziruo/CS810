@@ -18,9 +18,7 @@ target_label = int(1)
 # forward
 def forward_func(input_ids, attention_mask):
     input_ids = input_ids.long()
-    outputs = model(input_ids=input_ids, attention_mask=attention_mask,return_dict=True)
-    pooled = outputs.pooler_output
-    logits = model.classifier(pooled)
+    logits = model(input_ids=input_ids, attention_mask=attention_mask,return_dict=True).logits
     probs = torch.nn.functional.softmax(logits, dim=1)
     return probs[:, target_label] 
 
@@ -46,8 +44,7 @@ attributions, delta = ig.attribute(
     inputs=(input_ids, attention_mask),
     baselines=(baseline_ids, baseline_mask),
     return_convergence_delta=True,
-    n_steps=50,
-    target=None)
+    allow_unused=True)
 
 word_attributions = attributions[0].squeeze(0)
 
