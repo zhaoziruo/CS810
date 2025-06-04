@@ -2,8 +2,7 @@
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
-import torch.nn.functional as F
-from captum.attr import IntegratedGradients
+import captum
 
 #bert model finetuned on mnli
 #swap Adam optimizer with M-FAC
@@ -25,17 +24,18 @@ encoded = tokenizer(premise,hypothesis,
                     truncation=True,
                     max_length=128,
                     padding="max_length")
-input_ids      = encoded["input_ids"]
+input_ids = encoded["input_ids"]
 input_ids = input_ids.long()
 attention_mask = encoded["attention_mask"]
+attention_mask = attention_mask.long()
 
 # forward
 def forward_func(input_ids, attention_mask):
     logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
-    return F.softmax(logits, dim=1)
+    return torch.nn.functional.softmax(logits, dim=1)
 
 # IntegratedGradients
-ig = IntegratedGradients(forward_func)
+ig = captum.attr.IntegratedGradients(forward_func)
 
 # attribution
 attributions, delta = ig.attribute(
