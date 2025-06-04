@@ -32,17 +32,14 @@ encoded = tokenizer(premise,hypothesis,
                     padding="max_length")
 input_ids = encoded["input_ids"]
 attention_mask = encoded["attention_mask"]
-
-emb_out = model.bert.embeddings.word_embeddings(input_ids).detach()
-emb_out.requires_grad_(True)  
-baseline_ids  = torch.zeros_like(emb_out).long()
+baseline_ids  = torch.zeros_like(input_ids).long()
 
 # IntegratedGradients
 ig = captum.attr.IntegratedGradients(forward_func)
 
 # attribution
 attributions, delta = ig.attribute(
-    inputs=emb_out, 
+    inputs=input_ids, 
     additional_forward_args=attention_mask,
     baselines=baseline_ids,
     target=target_label,
