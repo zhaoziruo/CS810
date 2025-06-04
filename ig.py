@@ -20,7 +20,7 @@ def forward_func(input_ids, attention_mask):
     input_ids = input_ids.long()
     logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
     probs = torch.nn.functional.softmax(logits, dim=1)
-    return probs[:, true_label] 
+    return probs[:, target_label] 
 
 #take an example
 premise = "Your gift is appreciated by each and every student who will benefit from your generosity."
