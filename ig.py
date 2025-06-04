@@ -34,7 +34,6 @@ input_ids = encoded["input_ids"]
 attention_mask = encoded["attention_mask"]
 
 baseline_ids  = torch.zeros_like(input_ids).long()
-baseline_mask = torch.zeros_like(attention_mask).long()
 
 # IntegratedGradients
 ig = captum.attr.IntegratedGradients(forward_func)
@@ -43,7 +42,7 @@ ig = captum.attr.IntegratedGradients(forward_func)
 attributions, delta = ig.attribute(
     inputs=input_ids, 
     additional_forward_args=attention_mask,
-    baselines=(baseline_ids, baseline_mask),
+    baselines=baseline_ids,
     return_convergence_delta=True)
 
 word_attributions = attributions[0].squeeze(0)
