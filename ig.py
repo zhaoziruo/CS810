@@ -18,7 +18,7 @@ target_label = int(1)
 # forward
 def forward_func(input_ids, attention_mask):
     input_ids = input_ids.long()
-    logits = model(input_ids=input_ids, attention_mask=attention_mask,return_dict=True).logits
+    logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
     probs = torch.nn.functional.softmax(logits, dim=1)
     return probs
     
@@ -30,6 +30,7 @@ encoded = tokenizer(premise,hypothesis,
                     truncation=True,
                     max_length=128,
                     padding="max_length")
+
 input_ids = encoded["input_ids"]
 attention_mask = encoded["attention_mask"]
 baseline_ids  = torch.zeros_like(input_ids).long()
@@ -43,7 +44,7 @@ attributions, delta = ig.attribute(
     additional_forward_args=attention_mask,
     baselines=baseline_ids,
     return_convergence_delta=True,
-    n_steps=20)
+    target=target_label)
 
 word_attributions = attributions[0].squeeze(0)
 
