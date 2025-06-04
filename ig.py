@@ -14,7 +14,7 @@ model.eval()
 
 
 # 0:entailment, 1:neutral, 2:contradiction
-target_label = 1
+target_label = int(1)
 
 #take an example
 premise = "Your gift is appreciated by each and every student who will benefit from your generosity."
