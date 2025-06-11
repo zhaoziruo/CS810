@@ -2,7 +2,9 @@
 
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch
+import torch.nn.functional as F
 import captum
+import numpy as np
 
 #bert model finetuned on mnli
 #swap Adam optimizer with M-FAC
@@ -15,12 +17,21 @@ model = AutoModelForSequenceClassification.from_pretrained(model_name)
 # 0:entailment, 1:neutral, 2:contradiction
 target_label = int(1)
 
-# forward
-def forward_func(input_ids, attention_mask):
-    input_ids = input_ids.long()
-    logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
-    probs = torch.nn.functional.softmax(logits, dim=1)
-    return probs
+# predict_and_gradients
+def calculate_outputs_and_gradients(inputs_embeds, attention_mask, model, target_label_idx):
+    outputs = model(inputs_embeds=inputs_embeds, attention_mask=attention_mask)
+    logits = outputs.logits
+    probs = F.softmax(logits, dim=1)
+    if target_label_idx is None:
+        target_label_idx = torch.argmax(probs, 1).item()
+    
+    # clear grad
+    score = probs[0, target_label_idx]
+    model.zero_grad()
+    score.backward()
+    gradients = inputs_embeds.grad.detach().cpu().numpy()[0]
+
+    return gradients
     
 #take an example
 premise = "Your gift is appreciated by each and every student who will benefit from your generosity."
@@ -32,22 +43,37 @@ encoded = tokenizer(premise,hypothesis,
                     padding="max_length")
 
 input_ids = encoded["input_ids"]
+input_ids = input_ids.long()
 attention_mask = encoded["attention_mask"]
-baseline_ids  = torch.zeros_like(input_ids).long()
+
 
 # IntegratedGradients
-ig = captum.attr.IntegratedGradients(forward_func)
+def integrated_gradients(inputs, attention_mask, model, target_label_idx, predict_and_gradients, steps=50):
+    embed_layer   = model.get_input_embeddings()
+    orig_embeds   = embed_layer(inputs)
+    inputs_embeds = orig_embeds.detach().requires_grad_(True)
+    baseline  = torch.zeros_like(orig_embeds)
+    diff = orig_embeds - baseline
+
+    grads = predict_and_gradients(inputs_embeds, attention_mask, model, target_label_idx)
+
+    total_grads = torch.zeros_like(diff)
+    for i in np.linspace(0, 1, steps):
+        embeds = (baseline + i * diff).detach().requires_grad_(True)
+        grads = predict_and_gradients(inputs_embeds, attention_mask, model, target_label_idx)
+        total_grads += grads
+
+    avg_grads = total_grads / steps
+    integrated_grad = diff * avg_grads
+    integrated_grad = integrated_grad.detach().squeeze(0).cpu().numpy()
+    return integrated_grad
 
 # attribution
-attributions = ig.attribute(
-    inputs=input_ids, 
-    additional_forward_args=(attention_mask,),
-    baselines=baseline_ids,
-    return_convergence_delta=False,
-    target=target_label)
+attributions = integrated_gradients(input_ids, attention_mask, model, target_label, 
+                                    calculate_outputs_and_gradients, steps=50)
 
 # token-level IG value
 tokens = tokenizer.convert_ids_to_tokens(input_ids[0])
-scores = attributions[0].sum(dim=1)
-for tok, score in zip(tokens, scores):
-    print(f"{tok:>12} : {score.item(): .4f}")
+scores = np.linalg.norm(attributions, axis=1)
+for tok, sc in zip(tokens, scores):
+    print(f"{tok:>12} : {sc.item(): .4f}")
